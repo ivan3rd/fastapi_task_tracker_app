@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-# from app.routers import main_router
 from app.db import session_manager
 from app.utils import init_admin
 from app.authentication import JWTAuthenticationBackend
@@ -21,7 +20,6 @@ async def lifespan(app: FastAPI):
     await session_manager.close()
 
 from starlette.middleware.authentication import AuthenticationMiddleware
-from starlette.middleware import Middleware
 
 
 app = FastAPI(
