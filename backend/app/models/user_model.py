@@ -5,7 +5,7 @@ from datetime import datetime
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.db import Base, db_session, session_manager
+from app.db import Base, db_session
 
 
 class UserModel(Base):

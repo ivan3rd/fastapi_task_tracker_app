@@ -1,4 +1,5 @@
 from contextvars import ContextVar
+from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
@@ -7,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
 from .base import Base
 
 db_session_context = ContextVar('db_session')
+
 
 class DatabaseSessionManager:
     def __init__(self):
@@ -17,8 +19,9 @@ class DatabaseSessionManager:
     async def init(self, url: str):
         self._engine = create_async_engine(
             url,
-            pool_pre_ping=True,
+            poolclass=NullPool,
             echo=True,
+            isolation_level="AUTOCOMMIT",
         )
         self._sessionmaker = async_sessionmaker(
             bind=self._engine,

@@ -1,29 +1,28 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
+from starlette.middleware.authentication import AuthenticationMiddleware
 
 from app.db import session_manager
 from app.utils import init_admin
 from app.authentication import JWTAuthenticationBackend
-from app.settings import ( DATABASE_URL, APP_ADMIN_USERNAME, APP_ADMIN_PASSWORD,
+from app.settings import ( DATABASE_URL_FULL, APP_ADMIN_USERNAME, APP_ADMIN_PASSWORD,
     JWT_SECRET_KEY, JWT_ALGORITHM,
 )
 from app.routers import main_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await session_manager.init(DATABASE_URL)
+    await session_manager.init(DATABASE_URL_FULL)
     await session_manager.connect()
     await init_admin(APP_ADMIN_USERNAME, APP_ADMIN_PASSWORD)
     yield
     await session_manager.session.close()
     await session_manager.close()
 
-from starlette.middleware.authentication import AuthenticationMiddleware
-
 
 app = FastAPI(
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # middleware
@@ -60,7 +59,7 @@ def custom_openapi():
     }
 
     # Add security to protected paths
-    protected_paths = ['/who_am_i']
+    protected_paths = ['/who_am_i', '/tasks']
     for path in openapi_schema["paths"]:
         if any(p in path for p in protected_paths):
             for method in openapi_schema["paths"][path]:

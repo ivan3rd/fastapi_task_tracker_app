@@ -1,8 +1,8 @@
 import logging
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends
 
-from app.authentication import auth_manager
+from app.authentication import auth_manager, authenticate_user
 from app.schemas import AuthSchema, UserSchema
 
 
@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.post("/login")
-async def post_login(request: Request, data: AuthSchema) -> str:
+async def post_login(data: AuthSchema) -> str:
     """
     POST method\n
     введите логин и пароль, чтобы получить access token\n
@@ -29,13 +29,12 @@ async def post_login(request: Request, data: AuthSchema) -> str:
 
 
 @router.get("/who_am_i")
-async def get_user(request: Request) -> UserSchema:
+async def get_user(user = Depends(authenticate_user)) -> UserSchema:
     """
     GET Method \n
     Получение данных о текущем аутентифициорованном пользователе.\n
     Возвращает данные сохранённые в токене\n
     """
-    user = request.user
 
     return UserSchema(
         id=user.id,

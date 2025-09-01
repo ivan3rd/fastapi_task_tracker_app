@@ -23,6 +23,7 @@ class JWTUser(SimpleUser):
     def is_authenticated(self) -> bool:
         return True
 
+
 class JWTAuthenticationBackend(AuthenticationBackend):
 
     def __init__(self, secret: str, algorithm: str):
