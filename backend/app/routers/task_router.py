@@ -11,7 +11,7 @@ from app.schemas import (
     TaskOutSchema, PaginationResponse
 )
 from app.models import TaskModel
-from app.db import db_session
+from app.db import db_session, session_manager
 from app.types import TaskStatusTypeEnum
 
 
@@ -21,7 +21,11 @@ router = APIRouter()
 
 
 @router.post("", status_code=status.HTTP_201_CREATED,)
-async def post_task(data: TaskInSchema, user=Depends(authenticate_user)) -> TaskOutSchema:
+async def post_task(
+    data: TaskInSchema,
+    user = Depends(authenticate_user),
+    db_session = Depends(session_manager.activate_db_connection),
+) -> TaskOutSchema:
     """
     POST /tasks\n
     Создание новой задачи. Статус новой задачи всегда будет = 'created';\n
@@ -31,9 +35,8 @@ async def post_task(data: TaskInSchema, user=Depends(authenticate_user)) -> Task
         name=data.name,
         description=data.description,
     )
-    async with db_session() as session:
-        session.add(task)
-        await session.flush()
+    session_manager.session.add(task)
+    await session_manager.session.flush()
 
     return TaskOutSchema.model_validate(task)
 
@@ -44,6 +47,7 @@ async def get_list_tasks(
     page_size: int = 100,
     task_status: TaskStatusTypeEnum | None = None,
     user = Depends(authenticate_user),
+    db_session = Depends(session_manager.activate_db_connection),
 ) -> PaginationResponse:
     """
     GET /tasks\n
@@ -51,6 +55,8 @@ async def get_list_tasks(
     Есть возможность фильтрации по статусам task_status.\n
     """
 
+    logger.info('TASK_ROUTER')
+    logger.info(session_manager.db_session_context)
     tasks = await TaskModel.get_butch(
         page=page, page_size=page_size, task_status=task_status
     )
@@ -67,7 +73,11 @@ async def get_list_tasks(
 
 
 @router.get("/{task_id}")
-async def get_task(task_id: UUID, user=Depends(authenticate_user)) -> TaskOutSchema:
+async def get_task(
+    task_id: UUID,
+    user = Depends(authenticate_user),
+    db_session = Depends(session_manager.activate_db_connection),
+) -> TaskOutSchema:
     """
     GET /tasks/{task_id}\n
     Вывод одной задачи по приведённому task_id.\n
@@ -90,7 +100,7 @@ async def edit_task(
     task_id: UUID,
     data: TaskEditSchema,
     user = Depends(authenticate_user),
-    db_session = Depends(db_session)
+    db_session = Depends(session_manager.activate_db_connection),
 ) -> TaskOutSchema:
     """
     PUT /tasks/{task_id}\n
@@ -114,7 +124,11 @@ async def edit_task(
 
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_task(task_id: UUID, user=Depends(authenticate_user)):
+async def delete_task(
+    task_id: UUID,
+    user = Depends(authenticate_user),
+    db_session = Depends(session_manager.activate_db_connection),
+):
     """
     DELETE /tasks/{task_id}\n
     Удаление одной из задач по приведённому id.\n
@@ -128,8 +142,7 @@ async def delete_task(task_id: UUID, user=Depends(authenticate_user)):
             detail='Задача не была найдена',
         )
 
-    async with db_session() as session:
-        result = await session.execute(
-            delete(TaskModel)
-            .where(TaskModel.id == task_id)
-        )
+    await session_manager.session.execute(
+        delete(TaskModel)
+        .where(TaskModel.id == task_id)
+    )

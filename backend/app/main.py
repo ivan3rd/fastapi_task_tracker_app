@@ -11,10 +11,20 @@ from app.settings import ( DATABASE_URL_FULL, APP_ADMIN_USERNAME, APP_ADMIN_PASS
 )
 from app.routers import main_router
 
+
+import logging
+logger = logging.getLogger('uvicorn.error')
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await session_manager.init(DATABASE_URL_FULL)
+    logger.info('SESSION_MANAGER')
+    logger.info('before')
+    logger.info(session_manager.db_session_context)
     await session_manager.connect()
+    logger.info('after')
+    logger.info(session_manager.db_session_context)
     await init_admin(APP_ADMIN_USERNAME, APP_ADMIN_PASSWORD)
     yield
     await session_manager.session.close()

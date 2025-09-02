@@ -26,7 +26,8 @@ class DatabaseSessionManager:
         self._sessionmaker = async_sessionmaker(
             bind=self._engine,
             expire_on_commit=False,
-            class_=AsyncSession
+            class_=AsyncSession,
+            future=True,
         )
 
     async def connect(self):
@@ -58,6 +59,11 @@ class DatabaseSessionManager:
     async def drop_all(self):
         async with self._engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
+
+    async def activate_db_connection(self):
+        await self.connect()
+        yield self.session
+        self.session.close()
 
 
 session_manager = DatabaseSessionManager()

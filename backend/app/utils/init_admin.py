@@ -1,7 +1,7 @@
 import logging
 from sqlalchemy import select
 from app.models import UserModel
-from app.db import db_session
+from app.db import db_session, session_manager
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -23,6 +23,5 @@ async def init_admin(username: str, password: str):
         admin = True,
     )
 
-    async with db_session() as session:
-        session.add(admin)
-        await session.commit()
+    session_manager.session.add(admin)
+    await session_manager.session.commit()
