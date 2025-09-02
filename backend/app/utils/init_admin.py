@@ -10,7 +10,7 @@ async def init_admin(username: str, password: str):
     logger.info(f'init_admin. Ищем пользователя с username={username}')
     admin = await UserModel.get_by_username(username)
     if admin:
-        if admin.password != password:
+        if admin.check_password(password):
             raise Exception('Не верный пароль для админа. Измените в .env логин или пароль')
         if admin.admin is False:
             raise Exception('Этот пользователь уже существует, но не имеет прав админа. Измените в .env логин или пароль')
@@ -19,9 +19,9 @@ async def init_admin(username: str, password: str):
 
     admin = UserModel(
         username = username,
-        password = password,
         admin = True,
     )
+    admin.set_password(password)
 
     session_manager.session.add(admin)
     await session_manager.session.commit()

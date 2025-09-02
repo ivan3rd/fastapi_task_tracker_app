@@ -1,7 +1,9 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import select
 
 from app.settings import APP_ADMIN_PASSWORD, APP_ADMIN_USERNAME, DATABASE_URL
+from app.models import UserModel
 from app.main import app
 
 
@@ -11,6 +13,7 @@ async def test_login(db_session):
 
     response = await client.post('/login', json=auth_data)
     assert response.status_code == 200
+
     jwt = response.json()
 
     response = await client.get('/who_am_i')
@@ -20,3 +23,5 @@ async def test_login(db_session):
 
     response = await client.get('/who_am_i', headers=headers)
     assert response.status_code == 200
+
+    admin = (await db_session.scalars(select(UserModel).where(UserModel.username == APP_ADMIN_USERNAME))).one()

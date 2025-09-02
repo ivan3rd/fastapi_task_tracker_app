@@ -3,15 +3,15 @@ from uuid import UUID
 from math import ceil
 
 from fastapi import APIRouter, Depends, status, HTTPException
-from sqlalchemy import select, delete
+from sqlalchemy import delete
 
-from app.authentication import auth_manager, authenticate_user
+from app.authentication import authenticate_user
 from app.schemas import (
     TaskInSchema, TaskEditSchema,
     TaskOutSchema, PaginationResponse
 )
 from app.models import TaskModel
-from app.db import db_session, session_manager
+from app.db import session_manager
 from app.types import TaskStatusTypeEnum
 
 
@@ -119,6 +119,7 @@ async def edit_task(
 
     for key in data.__fields__.keys():
         setattr(task, key, getattr(data, key))
+    await db_session.flush()
 
     return TaskOutSchema.model_validate(task)
 

@@ -28,7 +28,7 @@ class AuthenticationManager():
 
     async def authenticate_user(self, data: AuthSchema):
         user = await UserModel.get_by_username(username=data.username)
-        if not await user.check_password(password=data.password):
+        if not user.check_password(password=data.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Не правильно набраны логин или пароль",
                                 headers={"WWW-Authenticate": "Bearer"},

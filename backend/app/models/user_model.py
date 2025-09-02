@@ -30,5 +30,10 @@ class UserModel(Base):
             )).one_or_none()
         return user
 
-    async def check_password(self, password: str):
-        return self.password == password
+    def check_password(self, password: str):
+        from app.authentication import verify_password, get_password_hash
+        return verify_password(password, self.password)
+
+    def set_password(self, password: str):
+        from app.authentication import get_password_hash
+        self.password = get_password_hash(password)

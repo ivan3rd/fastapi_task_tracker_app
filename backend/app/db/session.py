@@ -1,3 +1,4 @@
+import logging
 from contextvars import ContextVar
 from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.asyncio import (
@@ -7,8 +8,8 @@ from sqlalchemy.ext.asyncio import (
 )
 from .base import Base
 
+logger = logging.getLogger('uvicorn.error')
 db_session_context = ContextVar('db_session')
-
 
 class DatabaseSessionManager:
     def __init__(self):
@@ -62,8 +63,14 @@ class DatabaseSessionManager:
 
     async def activate_db_connection(self):
         await self.connect()
-        yield self.session
-        self.session.close()
+        try:
+            yield self.session
+        except Exception as e:
+            logger.error(f'Exception accured, while processing: {e}')
+            self.session.rollback()
+            raise
+        finally:
+            await self.session.close()
 
 
 session_manager = DatabaseSessionManager()
